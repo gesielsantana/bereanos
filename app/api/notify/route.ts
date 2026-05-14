@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   await Promise.all(
     profiles.map(({ name, email }) =>
       resend.emails.send({
-        from: 'Geração Bereana <onboarding@resend.dev>',
+        from: 'Geração Bereana <noreply@judaads.com.br>',
         to: email,
         subject: `Novo projeto de leitura: ${projectName}`,
         html: `
