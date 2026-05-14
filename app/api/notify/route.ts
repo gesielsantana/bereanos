@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { isAdmin } from '@/lib/admin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -22,7 +23,12 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Nenhum membro encontrado' }, { status: 400 })
   }
 
-  const { data: authUsers } = await supabase.auth.admin.listUsers()
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: authUsers } = await adminClient.auth.admin.listUsers()
 
   const emailMap: Record<string, string> = {}
   for (const u of authUsers?.users ?? []) {
