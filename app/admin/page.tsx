@@ -21,6 +21,8 @@ export default function AdminPage() {
   })
   const [savingProject, setSavingProject] = useState(false)
   const [savingGoal, setSavingGoal] = useState(false)
+  const [notifying, setNotifying] = useState(false)
+  const [notifyMsg, setNotifyMsg] = useState('')
 
   const loadData = useCallback(async () => {
     const supabase = createClient()
@@ -94,6 +96,23 @@ export default function AdminPage() {
       .order('week_number')
     setGoals(data ?? [])
     setSavingGoal(false)
+  }
+
+  async function notifyMembers(projectName: string) {
+    setNotifying(true)
+    setNotifyMsg('')
+    const res = await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectName }),
+    })
+    const data = await res.json()
+    if (data.ok) {
+      setNotifyMsg(`✅ Email enviado para ${data.sent} membro(s)!`)
+    } else {
+      setNotifyMsg(`❌ Erro: ${data.error}`)
+    }
+    setNotifying(false)
   }
 
   async function deleteGoal(id: string) {
@@ -188,15 +207,30 @@ export default function AdminPage() {
                     </p>
                     <p className="text-stone-500 text-xs">{proj.total_chapters} capítulos</p>
                   </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); toggleActive(proj) }}
-                    className={`text-xs px-2.5 py-1 rounded-full font-medium ${proj.active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-700 text-stone-400'}`}
-                  >
-                    {proj.active ? 'Ativo' : 'Inativo'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={e => { e.stopPropagation(); notifyMembers(proj.name) }}
+                      disabled={notifying}
+                      className="text-xs px-2.5 py-1 rounded-full font-medium bg-stone-700 text-amber-400 hover:bg-stone-600 disabled:opacity-50"
+                    >
+                      {notifying ? '...' : '📢'}
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleActive(proj) }}
+                      className={`text-xs px-2.5 py-1 rounded-full font-medium ${proj.active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-700 text-stone-400'}`}
+                    >
+                      {proj.active ? 'Ativo' : 'Inativo'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {notifyMsg && (
+          <div className="bg-stone-900 rounded-2xl px-5 py-3 border border-stone-800 text-sm text-stone-300">
+            {notifyMsg}
           </div>
         )}
 
