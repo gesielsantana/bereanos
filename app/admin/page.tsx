@@ -101,18 +101,23 @@ export default function AdminPage() {
   async function notifyMembers(projectName: string) {
     setNotifying(true)
     setNotifyMsg('')
-    const res = await fetch('/api/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectName }),
-    })
-    const data = await res.json()
-    if (data.ok) {
-      setNotifyMsg(`✅ Email enviado para ${data.sent} membro(s)!`)
-    } else {
-      setNotifyMsg(`❌ Erro: ${data.error}`)
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectName }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setNotifyMsg(`✅ Email enviado para ${data.sent} membro(s)!`)
+      } else {
+        setNotifyMsg(`❌ Erro: ${data.error}`)
+      }
+    } catch {
+      setNotifyMsg('❌ Erro de rede. Tente novamente.')
+    } finally {
+      setNotifying(false)
     }
-    setNotifying(false)
   }
 
   async function deleteGoal(id: string) {
