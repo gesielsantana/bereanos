@@ -1,6 +1,5 @@
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { isAdmin } from '@/lib/admin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -17,37 +16,18 @@ export async function POST(request: Request) {
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, name')
+    .select('name, email')
+    .not('email', 'is', null)
 
   if (!profiles || profiles.length === 0) {
-    return Response.json({ error: 'Nenhum membro encontrado' }, { status: 400 })
-  }
-
-  const adminClient = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  const { data: authUsers } = await adminClient.auth.admin.listUsers()
-
-  const emailMap: Record<string, string> = {}
-  for (const u of authUsers?.users ?? []) {
-    if (u.email) emailMap[u.id] = u.email
-  }
-
-  const emails = profiles
-    .map(p => ({ name: p.name, email: emailMap[p.id] }))
-    .filter(p => !!p.email)
-
-  if (emails.length === 0) {
-    return Response.json({ error: 'Nenhum email encontrado' }, { status: 400 })
+    return Response.json({ error: 'Nenhum membro com email encontrado' }, { status: 400 })
   }
 
   await Promise.all(
-    emails.map(({ name, email }) =>
+    profiles.map(({ name, email }) =>
       resend.emails.send({
         from: 'Geração Bereana <onboarding@resend.dev>',
-        to: email!,
+        to: email,
         subject: `Novo projeto de leitura: ${projectName}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #1c1917; color: #e7e5e4; padding: 32px; border-radius: 16px;">
@@ -68,5 +48,5 @@ export async function POST(request: Request) {
     )
   )
 
-  return Response.json({ ok: true, sent: emails.length })
+  return Response.json({ ok: true, sent: profiles.length })
 }

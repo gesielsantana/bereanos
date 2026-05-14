@@ -17,6 +17,7 @@ export async function GET(request: Request) {
         .single()
 
       if (profile?.name) {
+        await supabase.from('profiles').update({ email: user.email }).eq('id', user.id)
         return NextResponse.redirect(`${origin}/dashboard`)
       }
     }

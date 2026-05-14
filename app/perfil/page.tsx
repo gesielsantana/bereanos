@@ -39,7 +39,7 @@ export default function PerfilPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.replace('/'); return }
 
-    await supabase.from('profiles').upsert({ id: user.id, name: name.trim() })
+    await supabase.from('profiles').upsert({ id: user.id, name: name.trim(), email: user.email })
     router.replace('/dashboard')
   }
 
